@@ -77,7 +77,7 @@ const NSTimeInterval kAnimationDuration = 0.125;
 // falsely pick up clicks during rapid tab closure, so we have to account for
 // that.
 @interface TabStripControllerDragBlockingView : NSView {
-	CTTabStripController* controller_;  // weak; owns us
+	__weak CTTabStripController* controller_;  // weak; owns us
 }
 
 - (id)initWithFrame:(NSRect)frameRect
@@ -126,8 +126,8 @@ const NSTimeInterval kAnimationDuration = 0.125;
 // to prevent the use of dangling pointers.
 @interface TabCloseAnimationDelegate : NSObject {
 @private
-	CTTabStripController* strip_;  // weak; owns us indirectly
-	CTTabController* controller_;  // weak
+	__weak CTTabStripController* strip_;  // weak; owns us indirectly
+	__weak CTTabController* controller_;  // weak
 }
 
 // Will tell |strip| when the animation for |controller|'s view has completed.
@@ -207,11 +207,11 @@ const NSTimeInterval kAnimationDuration = 0.125;
 // whole are disabled while there are tabs closing.
 
 @implementation CTTabStripController {
-	CTTabContents* currentTab_;  // weak, tab for which we're showing state
+	__weak CTTabContents* currentTab_;  // weak, tab for which we're showing state
 	CTTabStripView* tabStripView_;
-	NSView* switchView_;  // weak
+	__weak NSView* switchView_;  // weak
 	NSView* dragBlockingView_;  // avoid bad window server drags
-	NewTabButton* newTabButton_;  // weak, obtained from the nib.
+	__weak NewTabButton* newTabButton_;  // weak, obtained from the nib.
 	
 	// The controller that manages all the interactions of dragging tabs.
 	CTTabStripDragController* dragController_;
@@ -219,8 +219,8 @@ const NSTimeInterval kAnimationDuration = 0.125;
 	// Tracks the newTabButton_ for rollovers.
 	NSTrackingArea* newTabTrackingArea_;
 	//scoped_ptr<CTTabStripModelObserverBridge> bridge_;
-	CTBrowser *browser_;  // weak
-	CTTabStripModel* tabStripModel_;  // weak
+	__weak CTBrowser *browser_;  // weak
+	__weak CTTabStripModel* tabStripModel_;  // weak
 	
 	// YES if the new tab button is currently displaying the hover image (if the
 	// mouse is currently over the button).
@@ -244,7 +244,7 @@ const NSTimeInterval kAnimationDuration = 0.125;
 	NSMutableSet* closingControllers_;
 	
 	// These values are only used during a drag, and override tab positioning.
-	CTTabView* placeholderTab_;  // weak. Tab being dragged
+	__weak CTTabView* placeholderTab_;  // weak. Tab being dragged
 	NSRect placeholderFrame_;  // Frame to use
 	NSRect droppedTabFrame_;  // Initial frame of a dropped tab, for animation.
 	// Frame targets for all the current views.
@@ -254,6 +254,8 @@ const NSTimeInterval kAnimationDuration = 0.125;
 	NSRect newTabTargetFrame_;
 	// If YES, do not show the new tab button during layout.
 	BOOL forceNewTabButtonHidden_;
+	// If YES, do not EVER show the new tab button
+	BOOL forceDisableNewTabButton_;
 	// YES if we've successfully completed the initial layout. When this is
 	// NO, we probably don't want to do any animation because we're just coming
 	// into being.
@@ -267,7 +269,7 @@ const NSTimeInterval kAnimationDuration = 0.125;
 	// A tracking area that's the size of the tab strip used to be notified
 	// when the mouse moves in the tab strip
 	NSTrackingArea* trackingArea_;
-	CTTabView* hoveredTab_;  // weak. Tab that the mouse is hovering over
+	__weak CTTabView* hoveredTab_;  // weak. Tab that the mouse is hovering over
 	
 	// Array of subviews which are permanent (and which should never be removed),
 	// such as the new-tab button, but *not* the tabs themselves.
@@ -508,7 +510,7 @@ const NSTimeInterval kAnimationDuration = 0.125;
 	
 	// Make sure the new tabs's sheets are visible (necessary when a background
 	// tab opened a sheet while it was in the background and now becomes active).
-	CTTabContents* newTab = [tabStripModel_ tabContentsAtIndex:modelIndex];
+	CTTabContents* newTab __attribute__((unused)) = [tabStripModel_ tabContentsAtIndex:modelIndex];
 	assert(newTab);
 	// TODO: Possibly need to implement this for sheets to function properly
 	/*if (newTab) {
@@ -722,14 +724,27 @@ const NSTimeInterval kAnimationDuration = 0.125;
 }
 
 - (void)setShowsNewTabButton:(BOOL)show {
-	if (!!forceNewTabButtonHidden_ == !!show) {
+	if (!forceDisableNewTabButton_ &&
+        !!forceNewTabButtonHidden_ == !!show) {
 		forceNewTabButtonHidden_ = !show;
 		[newTabButton_ setHidden:forceNewTabButtonHidden_];
 	}
 }
 
 - (BOOL)showsNewTabButton {
-	return !forceNewTabButtonHidden_ && newTabButton_;
+	return !forceDisableNewTabButton_ && !forceNewTabButtonHidden_ && newTabButton_;
+}
+
+- (void)setDisableNewTabButton:(BOOL)disable {
+	if (!!forceDisableNewTabButton_ != !!disable) {
+		forceDisableNewTabButton_ = disable;
+        forceNewTabButtonHidden_ = disable;
+		[newTabButton_ setHidden:forceNewTabButtonHidden_];
+	}
+}
+
+- (BOOL)disableNewTabButton {
+	return forceDisableNewTabButton_;
 }
 
 // Lay out all tabs in the order of their TabContentsControllers, which matches
