@@ -149,7 +149,8 @@ const NSTimeInterval kAnimationDuration = 0.125;
 
 - (id)initWithTabStrip:(CTTabStripController*)strip
          tabController:(CTTabController*)controller {
-	if (self == [super init]) {
+    self = [super init];
+	if (self) {
 		assert(strip && controller);
 		strip_ = strip;
 		controller_ = controller;
