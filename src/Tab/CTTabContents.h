@@ -64,7 +64,7 @@ extern NSString *const CTTabContentsDidCloseNotification;
 @property(retain, nonatomic) IBOutlet NSView *view;
 @property(retain, nonatomic) NSString *title;
 @property(retain, nonatomic) NSImage *icon;
-@property(retain, nonatomic) CTBrowser *browser;
+@property(strong, nonatomic) CTBrowser *browser;
 @property(strong, nonatomic) CTTabContents* parentOpener;
 
 // If this returns YES, special icons like throbbers and "crashed" is

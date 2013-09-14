@@ -214,6 +214,7 @@ static ThrobberTimer* _sharedThrobberTimer;
 		timerRunning_ = NO;
 		
 		validThread_ = [NSThread currentThread];
+        throbbers_ = [NSMutableSet new];
 	}
 	return self;
 }
