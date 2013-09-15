@@ -65,7 +65,8 @@
 	return [windowController_ window];
 }
 
-// TabStripModel convenience helpers
+#pragma mark -
+#pragma mark TabStripModel convenience helpers
 
 - (int)tabCount {
 	return [tabStripModel_ count];
